@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- 页面meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>商品管理</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../plugins/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/AdminLTE.css">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/skins/_all-skins.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+	<script src="../js/sweetalert.min.js"></script>
+	<script src="../plugins/jQuery/jquery-2.2.3.min.js"></script>
+    <script src="../plugins/bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../plugins/angularjs/angular.min.js"></script>
+	<!-- 分页组件开始 -->
+	<script src="../plugins/angularjs/pagination.js"></script>
+	<link rel="stylesheet" href="../plugins/angularjs/pagination.css">
+	<!-- 分页组件结束 -->
+	<script type="text/javascript" src="../js/base_pagination.js"></script>
+	<script type="text/javascript" src="../js/service/goodsService.js"></script>
+	<script type="text/javascript" src="../js/service/itemCatService.js"></script>
+	<script type="text/javascript" src="../js/service/uploadService.js"></script>
+	<script type="text/javascript" src="../js/service/typeTemplateService.js"></script>
+	<script type="text/javascript" src="../js/controller/baseController.js"></script>
+	<script type="text/javascript" src="../js/controller/goodsController.js"></script>
+ 
+</head>
+
+<body class="hold-transition skin-red sidebar-mini" ng-app="pinyougou" ng-controller="goodsController">
+  <!-- .box-body -->
+                
+                    <div class="box-header with-border">
+                        <h3 class="box-title">商品管理</h3>
+                    </div>
+
+                    <div class="box-body">
+
+                        <!-- 数据表格 -->
+                        <div class="table-box">
+
+                            <!--工具栏-->
+                            <div class="pull-left">
+                                <div class="form-group form-inline">
+                                    <div class="btn-group">
+                                        <a href="goods_edit.html" type="button" class="btn btn-default" title="新建" ><i class="fa fa-file-o"></i> 新建</a>
+                                        <button type="button" class="btn btn-default" title="删除" ng-click="dele()"><i class="fa fa-trash-o"></i> 删除</button>
+                                        <button ng-click="updateMarketable(1)" type="button" class="btn btn-default" title="上架" ><i class="fa fa-check"></i>上架</button>
+                                        <button ng-click="updateMarketable(0)" type="button" class="btn btn-default" title="下架"><i class="fa fa-ban"></i>下架</button>
+                                        <button type="button" class="btn btn-default" title="刷新" onclick="window.location.reload();"><i class="fa fa-refresh"></i> 刷新</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="box-tools pull-right">
+                                <div class="has-feedback">
+                                  状态：<select ng-model="searchEntity.auditStatus">
+                                         	<option value="">全部</option>
+                                         	<option value="0">未审核</option>
+                                         	<option value="1">已审核</option>
+                                         	<option value="2">审核未通过</option>
+                                         	<option value="3">关闭</option>
+                                        </select>
+							                  商品名称：<input ng-model="searchEntity.goodsName">
+									<button class="btn btn-default" ng-click="reloadList()">查询</button>
+                                </div>
+                            </div>
+                            <!--工具栏/-->
+
+			                  <!--数据列表-->
+			                  <table id="dataList" class="table table-bordered table-striped table-hover dataTable">
+			                      <thead>
+			                          <tr>
+			                              <th class="" style="padding-right:0px">
+			                                  <input ng-click="selectAll($event)" ng-model="all" id="selall" type="checkbox" class="icheckbox_square-blue">
+			                              </th> 
+										  <th class="sorting_asc">商品ID</th>
+									      <th class="sorting">商品名称</th>
+									      <th class="sorting">商品价格</th>
+									      <th class="sorting">一级分类</th>
+									      <th class="sorting">二级分类</th>
+									      <th class="sorting">三级分类</th>
+									      <th class="sorting">状态</th>									     						
+					                      <th class="text-center">操作</th>
+			                          </tr>
+			                      </thead>
+			                      <tbody>
+			                          <tr ng-repeat="goods in list">
+			                              <td><input ng-checked="all" ng-click="updateSelection($event,goods.id)"  type="checkbox"></td>
+				                          <td>{{goods.id}}</td>
+									      <td>{{goods.goodsName}}</td>
+									      <td>{{goods.price}}</td>
+									      <td>{{auditStatusList[goods.category1Id]}}</td>
+									      <td>{{auditStatusList[goods.category2Id]}}</td>
+									      <td>{{auditStatusList[goods.category3Id]}}</td>
+		                                  <td>
+		                                  	<span>
+		                                  		{{status[goods.auditStatus]}}
+		                                  	</span>
+		                                  </td>		                                  
+		                                  <td class="text-center">                                          
+		                                 	  <a href="goods_edit.html#?id={{goods.id}}" type="button" class="btn bg-olive btn-xs">修改</a>
+		                                  </td>
+			                          </tr>
+			                      </tbody>
+			                  </table>
+			                  <!--数据列表/-->                        
+							  
+							 
+                        </div>
+                        <!-- 数据表格 /-->
+                        
+                        
+                     </div>
+                    <!-- /.box-body -->
+  <tm-pagination conf="paginationConf"></tm-pagination>
+		
+</body>
+
+</html>

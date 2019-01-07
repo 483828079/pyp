@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd">
+	<!-- 真正可以产生Connection的ConnectionFactory，由对应的 JMS服务厂商提供 -->
+	<bean id="targetConnectionFactory"
+		class="org.apache.activemq.ActiveMQConnectionFactory">
+		<property name="brokerURL" value="tcp://192.168.25.153:61616" />
+	</bean>
+	<!-- Spring用于管理真正的ConnectionFactory的ConnectionFactory -->
+	<!--Spring提供的连接池，因为jmsTemplate每使用一次就会创建一次连接，session和productor。  -->
+	<bean id="connectionFactory"
+		class="org.springframework.jms.connection.SingleConnectionFactory">
+		<!-- 目标ConnectionFactory对应真实的可以产生JMS Connection的ConnectionFactory -->
+		<property name="targetConnectionFactory"
+			ref="targetConnectionFactory" />
+	</bean>
+	<!-- Spring提供的JMS工具类，它可以进行消息发送、接收等 -->
+	<!-- 需要session去创建，所以要连接对象 -->
+	<bean id="jmsTemplate"
+		class="org.springframework.jms.core.JmsTemplate">
+		<!-- 这个connectionFactory对应的是我们定义的Spring提供的那个ConnectionFactory对象 -->
+		<property name="connectionFactory" ref="connectionFactory" />
+	</bean>
+	<!--这个是队列目的地，点对点的 文本信息 
+		消费者生产消息到目的地需要session，如果是springJMS使用jsmTemplate去发送消息需要目的地。
+	-->
+	<bean id="queueSolrDestination"
+		class="org.apache.activemq.command.ActiveMQQueue">
+		<constructor-arg value="pinyougou_queue_solr" />
+	</bean>
+
+	<!--目的地，同样是queue。不过name不同。-->
+	<bean id="queueSolrDeleteDestination" class="org.apache.activemq.command.ActiveMQQueue">
+		<constructor-arg value="pinyougou_queue_solr_delete"/>
+	</bean>
+
+	<!--页面生成用的目的地。与索引不同的是使用的主题模式。
+		因为页面部署在nginx上，多个nginx进行集群。每个nginx上都有一个
+		商品详情页生成的服务，每个nginx都会生成同样的商品详情页。
+		所以每个服务都需要接收到同样的审核成功后发送到队列中的goodsId。
+		所以采用主题模式。
+		只需要注入新的Destination使用jmsTemplate发送消息就行了。
+	-->
+	<bean id="topicPageDestination" class="org.apache.activemq.command.ActiveMQTopic">
+		<constructor-arg value="pinyougou_topic_page"/>
+	</bean>
+
+	<!--主题模式，用来删除生成的商品详情页-->
+	<bean id="topicPageDeleteDestination" class="org.apache.activemq.command.ActiveMQTopic">
+		<constructor-arg value="pinyougou_topic_page_delete"/>
+	</bean>
+</beans>

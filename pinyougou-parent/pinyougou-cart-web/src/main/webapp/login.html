@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="js/sweetalert.min.js"></script>
+    <script src="js/plugins/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="plugins/angularjs/angular.min.js">  </script>
+    <script type="text/javascript" src="js/base.js">  </script>
+    <script type="text/javascript" src="js/service/cartService.js">  </script>
+    <script type="text/javascript" src="js/controller/cartController.js">  </script>
+    <!--登录页，因为cart.html是不拦截的
+        登录机制是访问一个页面未登录时页面重定向到cas登录页面，
+        登录成功后重新跳转回来。
+        所以只需要随便跳转一个页面，如果是未登录状态就会先重定向到cas登录页面
+        登录成功后会重定向回来，可以让这个页面的功能就是跳转到指定页面。
+        这就相当于，某个页面点击之后跳转到login.html页面，没有登录重定向到
+        cas登录页面，cas页面登录后重定向到login.html,login.html页面又跳转到
+        指定页面。就登陆成功了。
+    -->
+</head>
+<body ng-app="pinyougou" ng-controller="cartController" ng-init="mergerCartList()">
+
+</body>
+</html>

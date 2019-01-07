@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="FrameworkDetectionExcludesConfiguration">
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-cart-service" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-cart-web" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-content-service" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-dao" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-manager-web" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-order-service" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-page-service" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-page-web" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-pay-service" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-portal-web" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-search-service" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-search-web" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-seckill-service" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-seckill-web" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-sellergoods-service" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-shop-web" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-task-service" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-user-service" />
+    <file type="web" url="file://$PROJECT_DIR$/pinyougou-parent/pinyougou-user-web" />
+  </component>
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/pinyougou-parent/pom.xml" />
+        <option value="$PROJECT_DIR$/baima-sms/pom.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectInspectionProfilesVisibleTreeState">
+    <entry key="Project Default">
+      <profile-state>
+        <expanded-state>
+          <State />
+          <State>
+            <id>Java</id>
+          </State>
+          <State>
+            <id>Serialization issuesJava</id>
+          </State>
+        </expanded-state>
+        <selected-state>
+          <State>
+            <id>Serialization issuesJava</id>
+          </State>
+        </selected-state>
+      </profile-state>
+    </entry>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>

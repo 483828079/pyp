@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+    <!-- 以下页面不被拦截 -->
+    <http pattern="/login.html" security="none"></http>
+    <http pattern="/css/**" security="none"></http>
+    <http pattern="/img/**" security="none"></http>
+    <http pattern="/js/**" security="none"></http>
+    <http pattern="/plugins/**" security="none"></http>
+
+    <!-- 页面拦截规则 -->
+    <http use-expressions="false">
+        <!--拦截规则，拦截所有路径。需要角色ROLE_ADMIN才能访问
+            角色名必须使用ROLE开始
+        -->
+        <intercept-url pattern="/**" access="ROLE_ADMIN"/>
+        <!--login-page拦截后跳转的登录页面
+        login-processing-url 提交表单访问的页面。拦截到找Service进行处理
+            默认为/login
+            default-target-url,登录成功后跳转的页面。不过需要有权限才能访问
+                                                    密码正确，状态开启，拥有角色
+                                                    不然403
+            authentication-failure-url 用户验证失败后跳转的页面，这里重新跳回来写。
+            always-use-default-target 指定了是否在身份验证通过后总是跳转到default-target-url
+                                        不然访问了那通过验证后继续回去访问
+        -->
+        <form-login login-page="/login.html" default-target-url="/admin/index.html"
+                    authentication-failure-url="/login.html" always-use-default-target="true"/>
+        <!--关闭跨域请求能够防止一些攻击xss什么的。。-->
+        <csrf disabled="true"/>
+        <!--如果使用了frame要配置，不然默认会拦截。-->
+        <headers>
+            <frame-options policy="SAMEORIGIN"/>
+        </headers>
+        <!--默认访问/logout退出，销毁session
+            并且跳转到登录页面。
+        -->
+        <logout />
+    </http>
+
+    <!-- 认证管理器 -->
+    <authentication-manager>
+        <authentication-provider>
+            <user-service>
+                <!--两个用户，用户名，密码，所对应的角色-->
+                <user name="zzz" password="zzz" authorities="ROLE_ADMIN"/>
+            </user-service>
+        </authentication-provider>
+    </authentication-manager>
+</beans:beans>

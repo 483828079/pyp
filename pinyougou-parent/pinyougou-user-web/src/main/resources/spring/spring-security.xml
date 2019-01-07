@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+	<!-- 使用springSecurity整合CAS，可以将原来在web.xml中的配置放在SpringSecurity中去做。 -->
+	<!-- 服务端需要做的事：
+		可选的配置：可以更改配置方式的登录用户密码。
+		1.去掉https安全验证。
+		2.修改cookie声明周期，默认-1值存在于当前会话。
+		3.如果想要退出登录后跳转页面必须，必须配置允许退出登陆后可以进行重定向。 服务端ip+/cas/logout 退出登录。?service=地址。 退出后重定向。
+		4.默认情况下采用的是配置方式的认证，认证配置的用户名和密码。实际情况肯定需要使用数据库认证。
+		将默认配置方式改为数据库认证。  需要数据源，密码编码(加密方式，编码格式)。QueryDatabaseAuthenticationHandler配置该类.
+		还需要查询方式，去查询哪张表。根据用户名去校验密码。再替换掉原来的配置方式。
+		最后需要给服务端添加：连接池，mysql驱动，casjdbc支持的jar。
+		5.可以对登录页面进行改造。
+		6.改造登录页面后会有错误提示，默认英文。可以去修改国际化的需要的配置，改为中文。需要在中文配置中添加用户名不存在提示，密码错误提示。
+		
+		服务端的服务地址：
+			cas服务地址：/cas
+			认证 /cas/login
+			退出 cas/logout?service service退出后重定向地址。
+	 -->
+	<!-- 
+		未集成前客户端需要做的事.
+		1.引入CAS相关jar。
+		2.配置用户认证相关过滤器。Ticket校验过滤器。第一次登陆没有Ticket会重定向到服务端。
+			用户认证：需要服务端认证地址 /cas/login。客户端主机地址 http://localhost:9001
+			Ticket校验：校验地址/cas。直接就是服务地址。客户端主机地址 http://localhost:9001
+			认证通过后之后都会有Ticket。cookie存活期间都不会再重定向去认证。
+		3.配置可以通过两种方式来获取登录成功后的用户名。
+			1.包裹httpServletRequest的方式，可以通过httpServletRequest来拿到用户名。getRemoteUser()
+			2.AssertionHolder，可以获取登录的用户名
+	-->
+    <http pattern="/css/**" security="none"/>
+    <http pattern="/js/**" security="none"/>
+    <http pattern="/image/**" security="none"/>
+    <http pattern="/plugins/**" security="none"/>
+    <http pattern="/register.html" security="none"/>
+    <http pattern="/user/add.do" security="none"/>
+    <http pattern="/user/sendCode.do" security="none"/>
+
+	<!--   entry-point-ref  入口点引用 -->
+	<!-- SpringSecurity整合CAS之后登录认证就交给CAS去做了。入口点配置了CAS服务端用户认证的url和客户端地址 -->
+	<http use-expressions="false" entry-point-ref="casProcessingFilterEntryPoint">  
+        <intercept-url pattern="/**" access="ROLE_USER"/>   <!-- 认证 -->
+        <csrf disabled="true"/>   <!-- 关闭跨域请求拦截 -->
+         
+        <!-- custom-filter为过滤器， position 表示将过滤器放在指定的位置上，before表示放在指定位置之前  ，after表示放在指定的位置之后  -->           
+        <!-- 票据认证器 ,替换掉了SpringSecurity原来的认证。-->
+        <custom-filter ref="casAuthenticationFilter"  position="CAS_FILTER" />  <!-- casAuthenticationFilter替换CAS_FILTER对应的过滤器  -->   
+        <!-- 单点登出过滤器，放在了SpringSecurity登出过滤器之前。 -->
+        <custom-filter ref="requestSingleLogoutFilter" before="LOGOUT_FILTER"/>  <!-- requestSingleLogoutFilter放在LOGOUT_FILTER对应的过滤器之前 -->
+        <custom-filter ref="singleLogoutFilter" before="CAS_FILTER"/>  <!-- singleLogoutFilter放在 CAS_FILTER对应的过滤器之前-->
+    </http>
+  	<!-- CAS入口点 开始 , 入口点就是登陆认证的服务地址和客户端地址-->
+    <beans:bean id="casProcessingFilterEntryPoint" class="org.springframework.security.cas.web.CasAuthenticationEntryPoint">  
+        <!-- 单点登录服务器登录服务 -->  
+        <beans:property name="loginUrl" value="http://localhost:3000/cas/login"/>  
+        <beans:property name="serviceProperties" ref="serviceProperties"/>  
+    </beans:bean>      
+    <!--  客户端地址 -->
+    <beans:bean id="serviceProperties" class="org.springframework.security.cas.ServiceProperties">  
+        <!--service 配置自身工程的根地址+/login/cas   -->  
+        <beans:property name="service" value="http://localhost:4001/login/cas"/>
+    </beans:bean>  
+    <!-- CAS入口点 结束 -->
+   
+   
+   
+    <!-- 认证过滤器 开始。 
+    	认证过滤器相关着，认证授权。认证由CAS来做，就是票据验证器。 授权由SpringSecurity来做就是认证类。
+    	还需要客户端地址。
+     -->
+    <beans:bean id="casAuthenticationFilter" class="org.springframework.security.cas.web.CasAuthenticationFilter">  
+    	<!-- 引入认证管理器 -->
+        <beans:property name="authenticationManager" ref="authenticationManager"/>  
+    </beans:bean>  
+		<!-- 认证管理器 -->
+	<authentication-manager alias="authenticationManager">
+		<!-- 引入认证提供者 -->
+		<authentication-provider  ref="casAuthenticationProvider">
+		</authentication-provider>
+	</authentication-manager>
+	<!-- 认证提供者 -->
+	<beans:bean id="casAuthenticationProvider"     class="org.springframework.security.cas.authentication.CasAuthenticationProvider">  
+		<!-- 属性注入，认证类，客户端工程，票据验证器 -->
+        <beans:property name="authenticationUserDetailsService">  
+            <beans:bean class="org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper">  
+            	<!-- 认证类，只用来授权。认证交给了CAS -->
+                <beans:constructor-arg ref="userDetailsService" />  
+            </beans:bean>  
+        </beans:property>  
+        <!-- 客户端地址 -->
+        <beans:property name="serviceProperties" ref="serviceProperties"/>  
+        <!-- ticketValidator 为票据验证器 -->
+        <beans:property name="ticketValidator">  
+            <beans:bean class="org.jasig.cas.client.validation.Cas20ServiceTicketValidator">  
+            	<!-- 票据认证在CAS服务端的服务地址 -->
+                <beans:constructor-arg index="0" value="http://localhost:3000/cas"/>
+            </beans:bean>  
+        </beans:property>  
+        <beans:property name="key" value="an_id_for_this_auth_provider_only"/> 
+    </beans:bean>        
+   		 <!-- 认证类 -->
+	<beans:bean id="userDetailsService" class="com.pinyougou.user.service.UserDetailServiceImpl"/>
+	<!-- 认证过滤器 结束 -->
+	
+	
+	
+	
+	<!-- 单点登出  开始  -->     
+    <beans:bean id="singleLogoutFilter" class="org.jasig.cas.client.session.SingleSignOutFilter"/>  <!-- 单点登出的类 -->         
+    <!-- 单点登出的相关配置 -->
+    <beans:bean id="requestSingleLogoutFilter" class="org.springframework.security.web.authentication.logout.LogoutFilter">  
+    	<!-- 服务端单点登出服务地址，访问该地址之后销毁票据，下次登录就需要认证了。
+    		service参数值就是登出后 重定向的页面-->
+        <beans:constructor-arg value="http://localhost:3000/cas/logout?service=http://localhost:7001"/>
+        
+        <beans:constructor-arg>  
+            <beans:bean class="org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler"/>  
+        </beans:constructor-arg>  
+        
+        <!-- 登出的时候请求客户端的该地址就会去访问上面配置的服务端地址并进行重定向 -->
+        <beans:property name="filterProcessesUrl" value="/logout/cas"/>  
+    </beans:bean>  
+    <!-- 单点登出  结束 -->  
+</beans:beans>

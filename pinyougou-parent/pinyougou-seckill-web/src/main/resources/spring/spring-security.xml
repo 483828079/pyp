@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+    <http pattern="/css/**" security="none"/>
+    <http pattern="/js/**" security="none"/>
+    <http pattern="/image/**" security="none"/>
+    <http pattern="/plugins/**" security="none"/>
+    <http pattern="/seckill-index.html" security="none"/>
+    <!--即使不登录也能添加商品到购物车-->
+    <!--如果需要获取登录用户必须让SpringSecurity拦截-->
+    <!--<http pattern="/cart/**" security="none"/>-->
+    <!--购物车页面不进行拦截，不登录用cookie存储登录用redis存储并合并cookie中购物车购物车列表-->
+
+	<!--   entry-point-ref  入口点引用 -->
+	<!-- SpringSecurity整合CAS之后登录认证就交给CAS去做了。入口点配置了CAS服务端用户认证的url和客户端地址 -->
+	<http use-expressions="false" entry-point-ref="casProcessingFilterEntryPoint">
+        <!--添加匿名账号，如果是/*/*.do如果没有登录会使用匿名账号anonymousUser-->
+        <intercept-url pattern="/seckillGoods/*.do" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/seckillOrder/*.do" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <!--必须在所有路径都会验证ROLE_USER之前-->
+        <intercept-url pattern="/**" access="ROLE_USER"/>   <!-- 认证 -->
+        <csrf disabled="true"/>   <!-- 关闭跨域请求拦截 -->
+         
+        <!-- custom-filter为过滤器， position 表示将过滤器放在指定的位置上，before表示放在指定位置之前  ，after表示放在指定的位置之后  -->           
+        <!-- 票据认证器 ,替换掉了SpringSecurity原来的认证。-->
+        <custom-filter ref="casAuthenticationFilter"  position="CAS_FILTER" />  <!-- casAuthenticationFilter替换CAS_FILTER对应的过滤器  -->   
+        <!-- 单点登出过滤器，放在了SpringSecurity登出过滤器之前。 -->
+        <custom-filter ref="requestSingleLogoutFilter" before="LOGOUT_FILTER"/>  <!-- requestSingleLogoutFilter放在LOGOUT_FILTER对应的过滤器之前 -->
+        <custom-filter ref="singleLogoutFilter" before="CAS_FILTER"/>  <!-- singleLogoutFilter放在 CAS_FILTER对应的过滤器之前-->
+    </http>
+  	<!-- CAS入口点 开始 , 入口点就是登陆认证的服务地址和客户端地址-->
+    <beans:bean id="casProcessingFilterEntryPoint" class="org.springframework.security.cas.web.CasAuthenticationEntryPoint">  
+        <!-- 单点登录服务器登录服务 -->  
+        <beans:property name="loginUrl" value="http://localhost:3000/cas/login"/>  
+        <beans:property name="serviceProperties" ref="serviceProperties"/>  
+    </beans:bean>      
+    <!--  客户端地址 -->
+    <beans:bean id="serviceProperties" class="org.springframework.security.cas.ServiceProperties">  
+        <!--service 配置自身工程的根地址+/login/cas   -->  
+        <beans:property name="service" value="http://localhost:12001/login/cas"/>
+    </beans:bean>  
+    <!-- CAS入口点 结束 -->
+   
+   
+   
+    <!-- 认证过滤器 开始。 
+    	认证过滤器相关着，认证授权。认证由CAS来做，就是票据验证器。 授权由SpringSecurity来做就是认证类。
+    	还需要客户端地址。
+     -->
+    <beans:bean id="casAuthenticationFilter" class="org.springframework.security.cas.web.CasAuthenticationFilter">  
+    	<!-- 引入认证管理器 -->
+        <beans:property name="authenticationManager" ref="authenticationManager"/>  
+    </beans:bean>  
+		<!-- 认证管理器 -->
+	<authentication-manager alias="authenticationManager">
+		<!-- 引入认证提供者 -->
+		<authentication-provider  ref="casAuthenticationProvider">
+		</authentication-provider>
+	</authentication-manager>
+	<!-- 认证提供者 -->
+	<beans:bean id="casAuthenticationProvider"     class="org.springframework.security.cas.authentication.CasAuthenticationProvider">  
+		<!-- 属性注入，认证类，客户端工程，票据验证器 -->
+        <beans:property name="authenticationUserDetailsService">  
+            <beans:bean class="org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper">  
+            	<!-- 认证类，只用来授权。认证交给了CAS -->
+                <beans:constructor-arg ref="userDetailsService" />  
+            </beans:bean>  
+        </beans:property>  
+        <!-- 客户端地址 -->
+        <beans:property name="serviceProperties" ref="serviceProperties"/>  
+        <!-- ticketValidator 为票据验证器 -->
+        <beans:property name="ticketValidator">  
+            <beans:bean class="org.jasig.cas.client.validation.Cas20ServiceTicketValidator">  
+            	<!-- 票据认证在CAS服务端的服务地址 -->
+                <beans:constructor-arg index="0" value="http://localhost:3000/cas"/>
+            </beans:bean>  
+        </beans:property>  
+        <beans:property name="key" value="an_id_for_this_auth_provider_only"/> 
+    </beans:bean>        
+   		 <!-- 认证类 -->
+	<beans:bean id="userDetailsService" class="com.pinyougou.seckill.service.UserDetailServiceImpl"/>
+	<!-- 认证过滤器 结束 -->
+	
+	
+	
+	
+	<!-- 单点登出  开始  -->     
+    <beans:bean id="singleLogoutFilter" class="org.jasig.cas.client.session.SingleSignOutFilter"/>  <!-- 单点登出的类 -->         
+    <!-- 单点登出的相关配置 -->
+    <beans:bean id="requestSingleLogoutFilter" class="org.springframework.security.web.authentication.logout.LogoutFilter">  
+    	<!-- 服务端单点登出服务地址，访问该地址之后销毁票据，下次登录就需要认证了。
+    		service参数值就是登出后 重定向的页面-->
+        <beans:constructor-arg value="http://localhost:3000/cas/logout?service=http://localhost:12001"/>
+        
+        <beans:constructor-arg>  
+            <beans:bean class="org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler"/>  
+        </beans:constructor-arg>  
+        
+        <!-- 登出的时候请求客户端的该地址就会去访问上面配置的服务端地址并进行重定向 -->
+        <beans:property name="filterProcessesUrl" value="/logout/cas"/>  
+    </beans:bean>  
+    <!-- 单点登出  结束 -->  
+</beans:beans>
